@@ -82,6 +82,24 @@
             meta = metadata;
           };
         };
+
+        devShells = {
+          default = pkgs.mkShell rec {
+            packages = with pkgs; [
+              bashInteractive
+            ];
+
+            shellMotd = ''
+              Starting ${name}
+
+              nix develop .#default shell...
+            '';
+
+            shellHook = ''
+              ${pkgs.lib.getExe pkgs.cowsay} "${shellMotd}"
+            '';
+          };
+        };
       }
     );
 }

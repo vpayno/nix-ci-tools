@@ -1,0 +1,128 @@
+# .editorconfig
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+# indent_size = 4
+# indent_style = space
+insert_final_newline = true
+max_line_length = 240
+# tab_width = 4
+trim_trailing_whitespace = true
+
+[*.nix]
+indent_size = 2
+indent_style = space
+
+[{*.hcl,*.tf,*.tfvars,*.terraformrc,terraform.rc}]
+indent_size = 4
+indent_style = space
+
+[*.tfstate]
+indent_size = 4
+indent_style = space
+
+[*.{c,h,cpp,hpp}]
+indent_size = 4
+indent_style = space
+
+[*.{vim,vimrc}]
+indent_size = 4
+indent_style = space
+
+[*.csv]
+indent_size = 4
+indent_style = space
+
+[*.tsv]
+indent_size = 4
+indent_style = tab
+tab_width = 4
+
+[*.adoc]
+indent_size = 4
+indent_style = space
+
+[{.gitconfig,.gitmodules,.git/config}]
+indent_size = 4
+indent_style = space
+
+[Makefile]
+indent_size = 4
+indent_style = tab
+tab_width = 4
+
+[*.{ebuild,sh,bash}]
+indent_size = 4
+indent_style = tab
+tab_width = 4
+
+[*.rb]
+indent_size = 4
+indent_style = space
+
+[*.pl]
+indent_size = 4
+indent_style = tab
+tab_width = 4
+
+[{*.go,go.mod,go.sum}]
+indent_size = 4
+indent_style = tab
+tab_width = 4
+
+[*.{rs,ld}]
+indent_size = 4
+indent_style = space
+
+[*.py]
+indent_size = 4
+indent_style = space
+
+[*.{md,txt,text}]
+indent_size = 4
+indent_style = tab
+tab_width = 4
+
+[*.{conf,ini}]
+indent_size = 4
+indent_style = space
+
+[*.toml]
+indent_size = 4
+indent_style = space
+
+[*.{json,jsonl}]
+indent_size = 2
+indent_style = space
+
+[*.{yml,yaml}]
+indent_size = 2
+indent_style = space
+
+[*.{html,xhtml,xml,svg}]
+indent_size = 2
+indent_style = space
+
+[*.{css,less,sass,scss,vue}]
+indent_size = 4
+indent_style = space
+
+[*.{js,jsx,ts,tsx}]
+indent_size = 4
+indent_style = space
+
+[*.rb]
+indent_size = 2
+indent_style = space
+
+[*.cue]
+indent_size = 4
+indent_style = tab
+tab_width = 4
+
+[*.gleam]
+indent_size = 2
+indent_style = space

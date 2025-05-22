@@ -99,6 +99,16 @@
               ${pkgs.lib.getExe pkgs.cowsay} "${shellMotd}"
             '';
           };
+
+          ci-test = pkgs.mkShell {
+            buildInputs = with pkgs; [
+              bashInteractive
+            ];
+            shellHook = ''
+              ${pkgs.lib.getExe pkgs.cowsay} "Welcome to .#ci-test devShell!"
+              printf "\n"
+            '';
+          };
         };
       }
     );

@@ -38,7 +38,13 @@
         usageMessage = ''
           Available ${name} flake commands:
 
-            nix run .#usage
+            nix run .#usage | .#default
+
+            nix run .#mdlint-run
+            nix run .#mdlint-help
+
+            nix develop .#default
+            nix develop .#ci-markdown
         '';
 
         metadata = {
@@ -183,6 +189,28 @@
             name = "${pname}-${version}";
             program = "${pkgs.lib.getExe self.packages.${system}.showUsage}";
             meta = metadata;
+          };
+
+          mdlint-help = {
+            type = "app";
+            pname = "mdlint-help";
+            inherit version;
+            name = "${pname}-${version}";
+            program = "${pkgs.lib.getExe ci-help-markdownlint-cli}";
+            meta = metadata // {
+              description = "Markdown Lint CLI Wrapper Usage";
+            };
+          };
+
+          mdlint-run = {
+            type = "app";
+            pname = "mdlint-run";
+            inherit version;
+            name = "${pname}-${version}";
+            program = "${pkgs.lib.getExe ci-run-markdownlint-cli}";
+            meta = metadata // {
+              description = "Markdown Lint CLI Wrapper Tool";
+            };
           };
         };
 

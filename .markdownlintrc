@@ -1,0 +1,15 @@
+{
+  "default": true,
+  "header-increment": false,
+  "heading-increment": false,
+  "line-length": false,
+  "no-bare-urls": false,
+  "no-duplicate-header": false,
+  "no-duplicate-heading": false,
+  "no-inline-html": false,
+  "no-multiple-blanks": false,
+  "no-trailing-punctuation": false,
+  "MD046": {
+	"style": "fenced"
+  }
+}

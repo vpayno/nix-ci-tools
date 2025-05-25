@@ -30,7 +30,7 @@
       system:
       let
         pname = "nix-ci-tools";
-        version = "20250521.0.0";
+        version = "20250524.0.0";
         name = "${pname}-${version}";
 
         flake_repo_url = "github:vpayno/nix-ci-tools";
@@ -314,12 +314,10 @@
 
         devShells = {
           default = pkgs.mkShell rec {
-            packages =
-              with pkgs;
-              [
-                bashInteractive
-              ]
-              ++ ciScripts;
+            packages = with pkgs; [
+              bashInteractive
+              ciBundle
+            ];
 
             shellMotd = ''
               Starting ${name}
@@ -329,6 +327,10 @@
 
             shellHook = ''
               ${pkgs.lib.getExe pkgs.cowsay} "${shellMotd}"
+              printf "\n"
+
+              ${pkgs.lib.getExe pkgs.tree} "${ciBundle}"
+              printf "\n"
             '';
           };
 

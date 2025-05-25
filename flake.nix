@@ -63,6 +63,12 @@
           mainProgram = "showUsage";
         };
 
+        # very odd, this doesn't work with pkgs.writeShellApplication
+        # odd quoting error when the string usagemessage as new lines
+        showUsage = pkgs.writeShellScriptBin "showUsage" ''
+          printf "%s" "${usageMessage}"
+        '';
+
         configMarkdownLint = pkgs.writeTextFile {
           name = ".markdownlintrc";
           text = builtins.readFile ./.markdownlintrc;
@@ -195,7 +201,7 @@
             pname = "usage";
             inherit version;
             name = "${pname}-${version}";
-            program = "${pkgs.lib.getExe self.packages.${system}.showUsage}";
+            program = "${pkgs.lib.getExe showUsage}";
             meta = metadata;
           };
 

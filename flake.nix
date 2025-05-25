@@ -226,6 +226,17 @@
               description = "Markdown Lint CLI Wrapper Tool";
             };
           };
+
+          ci-gh-help = {
+            type = "app";
+            pname = "ci-gh-help";
+            inherit version;
+            name = "${pname}-${version}";
+            program = "${pkgs.lib.getExe ci-gh-help}";
+            meta = metadata // {
+              description = "CI Tools GH Usage";
+            };
+          };
         };
 
         devShells = {

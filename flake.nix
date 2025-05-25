@@ -89,9 +89,9 @@
             printf "\n"
             printf "Versions:\n"
             printf "\treviewdog version: "
-            reviewdog --version
+            ${pkgs.lib.getExe pkgs.reviewdog} --version
             printf "\tmarkdownlint-cli version: "
-            markdownlint --version
+            ${pkgs.lib.getExe pkgs.markdownlint-cli} --version
             printf "\n"
           '';
         };
@@ -136,21 +136,37 @@
           ci-run-markdownlint-cli-with-reviewdog
         ];
 
-        # note: don't know if I want to use this
-        ciEnvMarkdown = pkgs.buildEnv {
-          name = "${name}-ci-markdown-env";
+        ciConfigs = [
+          configMarkdownLint
+        ];
+
+        ciScripts = ciMarkdownScripts;
+
+        ciBundle = pkgs.buildEnv {
+          name = "${name}-bundle";
           paths = [
-            ciMarkdownScripts
-            (pkgs.runCommand "config" { } ''
+            (pkgs.runCommand "${name}-scripts" { } ''
+              mkdir -pv $out/bin
+              for f in "${ci-run-markdownlint-cli}"/bin/* "${ci-run-markdownlint-cli-with-reviewdog}"/bin/* "${ci-help-markdownlint-cli}"/bin/*; do
+                cp -v "$f" $out/bin/
+              done
+              ${pkgs.lib.getExe pkgs.tree} $out
+            '')
+            (pkgs.runCommand "${name}-config" { } ''
               mkdir -pv $out/etc/markdownlint
               cp -v ${configMarkdownLint} $out/etc/markdownlint/config.json
+              ${pkgs.lib.getExe pkgs.tree} $out
             '')
           ];
           buildInputs = with pkgs; [
             makeWrapper
           ];
+          pathsToLink = [
+            "/bin"
+            "/etc"
+          ];
           postBuild = ''
-            extra_bin_paths="${pkgs.lib.makeBinPath ciMarkdownScripts}"
+            extra_bin_paths="${pkgs.lib.makeBinPath ciScripts}"
             printf "Adding extra bin paths to wrapper scripts: %s\n" "$extra_bin_paths"
             printf "\n"
 
@@ -163,20 +179,12 @@
             done
           '';
         };
-
-        ciScripts = ciMarkdownScripts;
       in
       {
         formatter = treefmt-conf.formatter.${system};
 
         packages = rec {
-          default = showUsage;
-
-          # very odd, this doesn't work with pkgs.writeShellApplication
-          # odd quoting error when the string usagemessage as new lines
-          showUsage = pkgs.writeShellScriptBin "showUsage" ''
-            printf "%s" "${usageMessage}"
-          '';
+          default = ciBundle;
         };
 
         apps = rec {

@@ -33,6 +33,8 @@
         version = "20250521.0.0";
         name = "${pname}-${version}";
 
+        flake_repo_url = "github:vpayno/nix-ci-tools";
+
         pkgs = nixpkgs.legacyPackages.${system};
 
         usageMessage = ''
@@ -74,6 +76,11 @@
           text = builtins.readFile ./.markdownlintrc;
         };
 
+        configMarkdownGitHubWorkflow = pkgs.writeTextFile {
+          name = ".github/workflows/markdown.yaml";
+          text = builtins.readFile ./.github/workflows/markdown.yaml;
+        };
+
         ci-help-markdownlint-cli = pkgs.writeShellApplication {
           name = "ci-help-markdownlint-cli";
           text = ''
@@ -83,6 +90,7 @@
             printf "\tci-help-markdownlint-cli\n"
             printf "\tci-run-markdownlint-cli\n"
             printf "\tci-run-markdownlint-cli-with-reviewdog\n"
+            printf "\tgh-wf-setup-mdlint\n"
             printf "\n"
             printf "Config: %s\n" "${configMarkdownLint}"
             printf "\n"
@@ -136,10 +144,64 @@
           '';
         };
 
+        gh-wf-setup-mdlint = pkgs.writeShellApplication {
+          name = "gh-wf-setup-mdlint";
+          text = ''
+            printf "Running %s GitHub CI workflow CLI...\n" "gh-wf-setup-mdlint"
+            printf "\n"
+
+            declare gh_wf_dir=".github/workflows"
+            declare target_name
+            declare repo_url
+            repo_url="$(git remote get-url origin --push | sed -r -e 's|:|/|g; s|git@|https://|g; s/[.]git$//g')"
+            declare banner_line="[![Markdown Checks]($repo_url/actions/workflows/markdown.yaml/badge.svg?branch=main)]($repo_url/actions/workflows/markdown.yaml)"
+
+            target_name="$(basename "${configMarkdownGitHubWorkflow}")"
+            target_name="''${target_name##*-}"
+
+            if [[ ! -e $gh_wf_dir ]]; then
+              printf "ERROR: directory, %s, doesn't exist." "$gh_wf_dir"
+              mkdir -pv "$gh_wf_dir"
+              printf "\n"
+            fi
+
+            if [[ ! -d $gh_wf_dir ]]; then
+              printf "ERROR: directory, %s, isn't a directory." "$gh_wf_dir"
+              printf "\n"
+              exit 1
+            fi
+
+            if [[ ! -w $gh_wf_dir ]]; then
+              printf "ERROR: directory, %s, isn't writeable." "$gh_wf_dir"
+              printf "\n"
+              exit 1
+            fi
+
+            printf "GitHub Workflow Target: %s\n" "$gh_wf_dir"/"$target_name"
+            printf "GitHub README.md Target: %s\n" ./README.md
+            printf "\n"
+
+            cp -v "${configMarkdownGitHubWorkflow}" "$gh_wf_dir"/"$target_name"
+            chmod -v u+w "$gh_wf_dir"/"$target_name"
+            sed -r -i -e 's;CI_TOOL_REPO: ".";CI_TOOL_REPO: '"\"${flake_repo_url}\""';g' "$gh_wf_dir"/"$target_name"
+
+            # add new workflow status badge to line 3 of the README file
+            printf "Add GitHub workflow banner entry to %s...\n" "./README.md"
+            sed -i -e "3i $banner_line" ./README.md
+            printf "\n"
+
+            git status "$gh_wf_dir"/"$target_name" ./README.md
+            printf "\n"
+
+            printf "Done\n"
+          '';
+        };
+
         ciMarkdownScripts = [
           ci-help-markdownlint-cli
           ci-run-markdownlint-cli
           ci-run-markdownlint-cli-with-reviewdog
+          gh-wf-setup-mdlint
         ];
 
         ciConfigs = [
@@ -153,7 +215,7 @@
           paths = [
             (pkgs.runCommand "${name}-scripts" { } ''
               mkdir -pv $out/bin
-              for f in "${ci-run-markdownlint-cli}"/bin/* "${ci-run-markdownlint-cli-with-reviewdog}"/bin/* "${ci-help-markdownlint-cli}"/bin/*; do
+              for f in "${ci-run-markdownlint-cli}"/bin/* "${ci-run-markdownlint-cli-with-reviewdog}"/bin/* "${ci-help-markdownlint-cli}"/bin/* "${gh-wf-setup-mdlint}"/bin/*; do
                 cp -v "$f" $out/bin/
               done
               ${pkgs.lib.getExe pkgs.tree} $out
@@ -221,9 +283,20 @@
             pname = "mdlint-run";
             inherit version;
             name = "${pname}-${version}";
-            program = "${pkgs.lib.getExe ci-run-markdownlint-cli}";
+            program = "${pkgs.lib.getexe ci-run-markdownlint-cli}";
             meta = metadata // {
-              description = "Markdown Lint CLI Wrapper Tool";
+              description = "markdown lint cli wrapper tool";
+            };
+          };
+
+          gh-wf-setup-mdlint = {
+            type = "app";
+            pname = "gh-wf-setup-mdlint";
+            inherit version;
+            name = "${pname}-${version}";
+            program = "${pkgs.lib.getexe gh-wf-setup-mdlint}";
+            meta = metadata // {
+              description = "GitHub CI Workflow Cli";
             };
           };
 

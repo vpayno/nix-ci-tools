@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: Checkout Repo
         id: checkout-repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
@@ -79,7 +79,7 @@ jobs:
     steps:
       - name: Git Checkout
         id: checkout-repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main

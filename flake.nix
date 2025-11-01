@@ -16,6 +16,8 @@
       url = "github:vpayno/nix-treefmt-conf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    misc-tools.url = "github:vpayno/nix-misc-tools";
   };
 
   outputs =
@@ -25,7 +27,7 @@
       flake-utils,
       treefmt-conf,
       ...
-    }:
+    }@inputs:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -37,16 +39,10 @@
 
         pkgs = nixpkgs.legacyPackages.${system};
 
-        usageMessage = ''
+        usageMessagePre = ''
           Available ${name} flake commands:
 
-            nix run .#usage | .#default
-
-            nix run .#mdlint-run
-            nix run .#mdlint-help
-
-            nix develop .#default
-            nix develop .#ci-markdown
+            nix run .#usage | .#default              # this message
         '';
 
         metadata = {
@@ -65,11 +61,7 @@
           mainProgram = "showUsage";
         };
 
-        # very odd, this doesn't work with pkgs.writeShellApplication
-        # odd quoting error when the string usagemessage as new lines
-        showUsage = pkgs.writeShellScriptBin "showUsage" ''
-          printf "%s" "${usageMessage}"
-        '';
+        showUsage = scripts.flake-usage-text;
 
         configMarkdownLint = pkgs.writeTextFile {
           name = ".markdownlintrc";
@@ -108,6 +100,56 @@
             ${pkgs.lib.getExe pkgs.markdownlint-cli} --version
             printf "\n"
           '';
+        };
+
+        scripts = {
+          flake-usage-text = pkgs.writeShellApplication {
+            name = "flake-usage-text";
+            runtimeInputs =
+              with pkgs;
+              [
+                coreutils
+                jq
+                gnugrep
+                nix
+              ]
+              ++ (with inputs.misc-tools.packages.${system}; [
+                current-system
+              ]);
+            text = ''
+              declare json_text
+              declare -a commands
+              declare -a comments
+              declare -i i
+
+              printf "\n"
+              printf "%s" "${usageMessagePre}"
+              printf "\n"
+
+              json_text="$(nix flake show --json 2>/dev/null | jq --sort-keys .)"
+
+              mapfile -t commands < <(printf "%s" "$json_text" | jq -r --arg system "$(current-system)" '.apps[$system] | to_entries[] | select(.key | test("^(default|usage)$") | not) | "\("nix run .#")\(.key)"')
+              mapfile -t comments < <(printf "%s" "$json_text" | jq -r --arg system "$(current-system)" '.apps[$system] | to_entries[] | select(.key | test("^(default|usage)$") | not) | "\("# ")\(.value.description)"')
+
+              for ((i = 0; i < ''${#commands[@]}; i++)); do
+                printf "  %-40s %s\n" "''${commands[$i]}" "''${comments[$i]}"
+              done
+
+              printf "\n"
+
+              mapfile -t commands < <(printf "%s" "$json_text" | jq -r --arg system "$(current-system)" '.devShells[$system] | to_entries[] | "\("nix develop .#")\(.key)"')
+              mapfile -t comments < <(printf "%s" "$json_text" | jq -r --arg system "$(current-system)" '.devShells[$system] | to_entries[] | "\("# ")\(.value.name)"')
+
+              for ((i = 0; i < ''${#commands[@]}; i++)); do
+                printf "  %-40s %s\n" "''${commands[$i]}" "''${comments[$i]}"
+              done
+
+              printf "\n"
+            '';
+            meta = {
+              description = "Generate nix flake usage text";
+            };
+          };
         };
 
         ci-run-markdownlint-cli = pkgs.writeShellApplication {
